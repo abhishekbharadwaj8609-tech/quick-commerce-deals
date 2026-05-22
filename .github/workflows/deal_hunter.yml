@@ -38,6 +38,7 @@ jobs:
         run: |
           git config user.email "actions@github.com"
           git config user.name  "Deal Hunter Bot"
+          [ -f seen_deals.json ] || echo "[]" > seen_deals.json
           git add seen_deals.json
           git diff --staged --quiet || git commit -m "Update seen deals [skip ci]"
-          git push
+          git push || true
