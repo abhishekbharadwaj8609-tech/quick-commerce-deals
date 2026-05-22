@@ -1,0 +1,43 @@
+name: Quick Commerce Deal Hunter
+
+on:
+  schedule:
+    - cron: "0,30 * * * *"   # Every 30 minutes, 24/7
+  workflow_dispatch:          # Manual run option
+
+jobs:
+  hunt-deals:
+    name: Scan Deals — Patiala 50%+ Off
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: write          # Needed to commit seen_deals.json back
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4 pytz
+
+      - name: Run Deal Hunter
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python deal_hunter.py
+
+      - name: Save seen deals (anti-spam)
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name  "Deal Hunter Bot"
+          git add seen_deals.json
+          git diff --staged --quiet || git commit -m "Update seen deals [skip ci]"
+          git push
